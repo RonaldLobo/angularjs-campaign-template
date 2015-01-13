@@ -1,0 +1,87 @@
+
+<form method="post" name='opt_in_form' class='templateForm' id='opt_in_form' ng-submit="opt_in_form.$valid && save(up)">
+    <div class='form-element form-input-full'>
+        <label>Product<span class='required'>*</span></label>
+        <select ng-model="up.productID">
+            <option value="prod1">Product 1</option>
+            <option value="prod2">Product 2</option>
+            <option value="prod3">Product 3</option>
+        </select>
+    </div>
+    <div class='form-element form-input-full'>
+        <label>Shipping type<span class='required'>*</span></label>
+        <select ng-model="up.shipping">
+            <option value="ship1">Shipping 1</option>
+            <option value="ship2">Shipping 2</option>
+            <option value="ship3">Shipping 3</option>
+        </select>
+    </div>
+    <div class="ccinfo" ng-show="showCc">
+        <div class='form-element form-input-full' >
+            <label>We Accept </label> 
+            <img title="Visa" src="img/cc-icon-visa.png" alt="Visa">
+            <img title="Mastercard" src="img/cc-icon-mastercard.png" alt="Mastercard"> 
+            <img title="American Express" src="img/cc-icon-amex.png" alt="American Express"> 
+            <img title="Discover Card" src="img/cc-icon-discover.png" alt="Discover Card">
+        </div>
+        <div class='form-element form-input-full'>
+            <label>Card type<span class='required'>*</span></label>
+            <select class='' required ng-model='ccinfo.paymentType' ng-change="typeChange()">
+                <option value="">Select Payment Method</option>
+                <option value="2">Visa</option>
+                <option value="3">Master Card</option>
+                <option value="4">Discover</option>
+                <option value="1">American Express</option>
+            </select>
+        </div>
+        <div class='form-element form-input-full' >
+            <label>Credit Card #<span class='required'>*</span></label>
+            <input
+          id="cc_number"
+          type="text"
+          name="creditCard"
+          ng-model="ccinfo.creditCard"
+          required
+          data-credit-card-type
+          data-ng-pattern="/^[0-9]+$/"
+          minLength="15"
+          maxlength="19"
+          placeholder="Card Number"
+          title="Please insert a valid CC number 15 digits if AMEX or 13-16 if others"
+          ng-blur='ccCheck()'
+          only-digits
+          />
+        </div>
+        <div class='form-element form-input-2col'>
+            <label>Expiration Date<span class='required'>*</span></label>
+            <select ng-model="ccinfo.expMonth" name="month" data-card-expiration required class='dropdown month'>
+                <option disabled selected value="">Month</option>
+                <option ng-repeat="month in months" value="{{$index+1}}" > {{$index+1}} - {{month}}</option>
+            </select>
+            <select ng-model="ccinfo.expYear" name="year" required class='dropdown year'>
+                <option disabled selected value="">Year</option>
+                <option ng-repeat="year in [] | range:currentYear:currentYear+13">{{year}}</option>
+            </select>
+        </div>
+        <div class='form-element form-input-full'>
+            <label>Security Code<span class='required'>*</span></label>
+            <input
+                id="cc_cvv"
+                type="text"
+                name="securityCode"
+                ng-model="ccinfo.cvv"
+                placeholder="CCV"
+                required
+                data-ng-pattern="/^[0-9]+$/"
+                minLength="3"
+                maxlength="4"
+                class="ccv"
+                title="Please insert a valid CVV number 4 digits if AMEX or 3 if others"
+                ng-blur='cvvCheck()'
+                only-digits
+                />
+        </div>
+    </div>
+    <input ng-click="" tabindex="9" class="form-button" type='submit' id="button-submit" value="submit" readonly/>
+    <div class="button-processing" id="button-processing" style="display:none;"><img src="img/loading.gif" /><br />Processing...</div>
+</form>

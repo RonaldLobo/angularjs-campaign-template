@@ -1,0 +1,15 @@
+<script>
+    var upsellSettings = config.Upsell1Bootstrap;
+    var pageId = 2;
+</script>
+
+<h1>CC Information</h1>
+<div class="" ng-include="templates.templateCC">
+
+</div>
+
+
+<!-- Triangle tracking -->
+<div ng-bind-html="pixel | to_trusted"></div>
+<script ng-repeat="script in scripts" ng-src="{{script.src}}"></script>
+<!-- end of Triangle tracking -->

@@ -2,48 +2,52 @@
  * This is the Controller for the CC Page
  */
 
-module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
+module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,ServiceCvv,ServiceDate,ServiceCc,ServiceHandler,AlertHandler,BakeCookie,encrypt,ServicePixel) {
       billingInfo = BakeCookie.get('billingInfo');
-      $scope.ver = $routeParams.ver || 1;
-      $scope.showEl = orderShowEl;
-      $scope.showElOp = orderShowElOp;
+      ccInfo = BakeCookie.get('ccInfo');
       $scope.templates = { 
-          header  : 'templates/headers/header.html',
-          templateCC : 'templates/forms/ccTemplate.html',
-          footer : 'templates/footers/footer.html',
-          1 : 'templates/contents/billing.html',
-          content2 : 'templates/contents/step2-order.html'};
-      $scope.ccinfo = {};
+          1 : 'templates/contents/upsellTemplate.html'
+      }
+      $scope.up = {};
+      $scope.showCc = false;
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined && !orderShowEl.shippingForm) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
-      $scope.ccinfo.trialPackageID = orderSettings.trialPackageID;
-      $scope.ccinfo.chargeForTrial = orderSettings.chargeForTrial;
-      $scope.ccinfo.planID = orderSettings.planID;
-      $scope.ccinfo.campaignID = orderSettings.campaign_id;
-      $scope.ccinfo.firstName = billingInfo.firstName;
-      $scope.ccinfo.lastName = billingInfo.lastName;
-      $scope.ccinfo.address1 = billingInfo.address1;
-      $scope.ccinfo.address2 = billingInfo.address2 || '';
-      $scope.ccinfo.city = billingInfo.city;
-      $scope.ccinfo.state = billingInfo.state;
-      $scope.ccinfo.zip = billingInfo.zip;
-      $scope.ccinfo.country = billingInfo.country;
-      $scope.ccinfo.phone = billingInfo.phone;
-      $scope.ccinfo.email = billingInfo.email;
-      $scope.ccinfo.sendConfirmationEmail = orderSettings.sendConfirmationEmail;
-      $scope.ccinfo.affiliate = $routeParams('aff') || '';
-      $scope.ccinfo.subAffiliate = $routeParams('sub') || '';
-      $scope.ccinfo.prospectID = billingInfo.ProspectID;
-      $scope.ccinfo.description = orderSettings.description;
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
+      if(ccInfo == undefined) $scope.showCc = true;
+      $scope.up.amount = upsellSettings.amount;
+      $scope.up.shipping = upsellSettings.shipping;
+      $scope.up.productTypeID = upsellSettings.productTypeID;
+      $scope.up.productID = upsellSettings.productID;
+      $scope.up.campaignID = upsellSettings.campaign_id;
+      $scope.up.firstName = billingInfo.firstName;
+      $scope.up.lastName = billingInfo.lastName;
+      $scope.up.address1 = billingInfo.address1;
+      $scope.up.address2 = billingInfo.address2 || '';
+      $scope.up.city = billingInfo.city;
+      $scope.up.state = billingInfo.state;
+      $scope.up.zip = billingInfo.zip;
+      $scope.up.country = billingInfo.country;
+      $scope.up.phone = billingInfo.phone;
+      $scope.up.email = billingInfo.email;
+      $scope.up.paymentType = ccInfo.paymentType;
+      $scope.up.creditCard = ccInfo.creditCard;
+      $scope.up.cvv = ccInfo.cvv;
+      $scope.up.expMonth = ccInfo.expMonth;
+      $scope.up.expYear = ccInfo.expYear;
+      $scope.up.sendConfirmationEmail = upsellSettings.sendConfirmationEmail;
+      $scope.up.affiliate = $routeParams('aff') || '';
+      $scope.up.subAffiliate = $routeParams('sub') || '';
+      $scope.up.customField1 = $routeParams.click_id;
+      $scope.up.prospectID = billingInfo.ProspectID;
+      $scope.up.description = upsellSettings.description;
       $scope.save = function(){  // save function, called when submit
         $("#button-processing").show();
         $("#button-submit").hide();
-        var oldCC = $scope.ccinfo.creditCard; 
-        $scope.ccinfo.creditCard = encrypt.encryptData(oldCC);
-        jsonObj = JSON.stringify($scope.ccinfo);
-        ServiceHandler.post('CreateSubscription',jsonObj
+        var oldCC = $scope.up.creditCard; 
+        $scope.up.creditCard = encrypt.encryptData(oldCC);
+        jsonObj = JSON.stringify($scope.up);
+        ServiceHandler.post('Charge',jsonObj
         ).then(function(response){
             if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
                 internal = true;

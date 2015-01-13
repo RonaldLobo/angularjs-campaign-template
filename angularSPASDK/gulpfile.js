@@ -13,7 +13,7 @@ global.errorMessage = '';
 
 var jsFiles = [
 {
-watch: ['js/App/*.js','js/App/Config/*.js','js/App/Filters/*.js','js/App/Directives/*.js','js/App/Factories/*.js','js/App/Controllers/*.js'],
+watch: ['js/App/*.js','js/App/Routes/*.js','js/App/Filters/*.js','js/App/Directives/*.js','js/App/Factories/*.js','js/App/Controllers/*.js'],
 output: 'js/',
 name: 'app.js',
 nameMin: 'app.min.js'

@@ -7,6 +7,8 @@ module.controller( 'SuccessCtrl' , function($scope) {
                           footer : 'templates/footers/footer.html',
                           content : 'templates/contents/success.html'
                       };
+                      
+                      $scope.status = 'ready';
 });
   
 

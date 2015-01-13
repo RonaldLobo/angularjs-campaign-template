@@ -10,7 +10,7 @@
 	<link type="text/css" rel="stylesheet" href="css/index.css"/>
         <link type="text/css" rel="stylesheet" href="css/jNotify.jquery.css"/>
     </head>
-    <body>
+    <body data-status="{{ status }}">
         <div class="offer" static-include="/templates/offers/offer.html">
 
         </div>
@@ -24,7 +24,7 @@
             </div>
         </div>
         <!-- Necessary Scripts -->
-        
+        <script src="js/AppSettings.js"></script>
         <script src="js/jquery.min.js"></script>
         <script src='js/jNotify.jquery.min.js'></script>
         <script src='js/jquery.maskedinput.min.js'></script>
@@ -35,6 +35,7 @@
         <script src='js/exit.js'></script>
         <script src="js/billing/jsbn.js"></script>
         <script src="js/billing/rsa.js"></script>
+        <script src="js/sanitize.js"></script>
         
         <!-- End of necessary scripts -->
         

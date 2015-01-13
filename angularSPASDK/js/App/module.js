@@ -29,7 +29,11 @@
  * Global Module for all the app
  */
 
-var module = angular.module('app',['ngCookies','ngRoute']);
+angular.module('HashBangURLs', []).config(['$locationProvider', function($location) {
+  $location.hashPrefix('!');
+}]);
+
+var module = angular.module('app',['ngCookies','ngRoute','HashBangURLs']);
 
 module.directive('script', function() {
     return {
@@ -57,3 +61,5 @@ module.directive('script', function() {
       }
     };
   });
+
+

@@ -29,7 +29,11 @@
  * Global Module for all the app
  */
 
-var module = angular.module('app',['ngCookies','ngRoute']);
+angular.module('HashBangURLs', []).config(['$locationProvider', function($location) {
+  $location.hashPrefix('!');
+}]);
+
+var module = angular.module('app',['ngCookies','ngRoute','HashBangURLs']);
 
 module.directive('script', function() {
     return {
@@ -58,6 +62,8 @@ module.directive('script', function() {
     };
   });
 
+
+
 /* 
  * This config allow you to get values from the query string using locationProvider
  */
@@ -71,44 +77,29 @@ module.config(['$locationProvider', function($locationProvider){
  * This config to add the SPA's routing 
  */
 
+
+
 module.config(function($routeProvider) {
     $routeProvider
-            // route for the home page
             .when('/', {
-                    templateUrl : '/templates/contents/index.php',
+                    templateUrl : '/templates/holders/homeHolder.html',
                     controller  : 'InfoCtrl'
             })
-            .when('/index', {
-                    templateUrl : '/templates/contents/index.php',
+            .when('/{ver}', {   
+                    templateUrl : '/templates/holders/homeHolder.html',
                     controller  : 'InfoCtrl'
             })
-
-            // route for the about page
-            .when('/order', {
-                    templateUrl : '/templates/contents/order.php',
+            .when('/Billing', {
+                    templateUrl : '/templates/contents/billing.html',
                     controller  : 'CcCtrl'
             })
-
-            // route for the sucess page
             .when('/success', {
-                    templateUrl : '/templates/contents/success.php',
+                    templateUrl : '/templates/contents/success.html',
                     controller  : 'SuccessCtrl'
             })
-            
-            // route for the step2 order page
-            .when('/step2-order', {
-                    templateUrl : '/templates/contents/step2-order.php',
-                    controller  : 'CcCtrl'
-            })
-            
-            // route for the step2 sucess page
-            .when('/step2-success', {
-                    templateUrl : '/templates/contents/step2-success.php',
-                    controller  : 'SuccessCtrl'
-            })
-            .when('/step3', {
-                    templateUrl : '/templates/contents/step3-order.php',
-                    controller  : 'CcCtrl'
+            .when('/upsell', {
+                    templateUrl : '/templates/contents/upsell.php',
+                    controller  : 'UpCtrl'
             })
             .otherwise({
                     redirectTo: '/'
@@ -131,6 +122,14 @@ module.filter( 'range', function() {
         }
       return filter
     } );
+    
+    
+//    Unsafe html to safe
+module.filter('to_trusted', ['$sce', function($sce){
+        return function(text) {
+            return $sce.trustAsHtml(text);
+        };
+    }]);
 
 
 
@@ -297,26 +296,165 @@ module.factory('ParameterByName', function(){
             }
     }
 });
+
+/* 
+ * This Factory handles the pixel code
+ */
+
+module.factory('ServicePixel', ['$http','$routeParams',function($http,$routeParams){
+    return {
+        get : function(pageTypeID,prospectID){
+            var getPixel = {};
+            getPixel.affiliate = $routeParams.aff || '';
+            getPixel.clickId = $routeParams.click_id || '';
+            getPixel.pageTypeID = pageTypeID;
+            getPixel.prospectID = prospectID;
+            jsonObj = JSON.stringify(getPixel);
+            return $http.post('TriangleCRM/Controller.php', {
+                action : 'FireAffiliatePixel',
+                data : jsonObj
+            });
+        }
+    }
+}]);
+
+/* 
+ * This Factory handles the hit code
+ */
+
+module.factory('ServiceHit', ['$routeParams',function($routeParams){
+    return {
+        get : function(pageId,campaignId){
+            var hit =  "http://"+config.general.instance+".trianglecrm.com/pixel/hit.js?aff="+$routeParams.aff+"&sub="+$routeParams.sub+"&pid="+pageId+"&cid="+campaignId;
+            return hit;
+        }
+    }
+}]);
+
+
+/* 
+ * This Factory handles the the cvv check
+ */
+
+module.factory('ServiceCvv', function(){
+    return {
+        get : function(type,cvv){
+            var msg = '';
+            if(type==undefined){
+                msg ='Please select a Card Type first';
+            }
+            else{
+                if(cvv == undefined){
+                }
+                else{
+                    if(type==1){
+                        if(cvv.toString().length != 4)
+                            msg ='The CVV number for AMEX should have 4 digits';
+                    }
+                    else{
+                        if(cvv.toString().length != 3)
+                            msg = 'The CVV number for Visa, MasterCard and Discover should have 3 digits';
+                    }
+                }
+            }
+            return msg;
+        }
+    }
+});
+
+/* 
+ * This Factory handles the the cvv check
+ */
+
+module.factory('ServiceCvv', function(){
+    return {
+        get : function(type,cvv){
+            var msg = '';
+            if(type==undefined){
+                msg ='Please select a Card Type first';
+            }
+            else{
+                if(cvv == undefined){
+                }
+                else{
+                    if(type==1){
+                        if(cvv.toString().length != 4)
+                            msg ='The CVV number for AMEX should have 4 digits';
+                    }
+                    else{
+                        if(cvv.toString().length != 3)
+                            msg = 'The CVV number for Visa, MasterCard and Discover should have 3 digits';
+                    }
+                }
+            }
+            return msg;
+        }
+    }
+});
+
+module.factory('ServiceCc', function(){
+    return {
+        get : function(type,creditCard){
+            var msg = '';
+            if(type == undefined){
+                msg = 'Please select a Card Type first';
+            }
+            else{
+                if(creditCard == undefined){
+                    
+                }
+                else{
+                    if(type == 1){
+                        if(creditCard.toString().length != 15)
+                            msg = 'The credit card number for AMEX should have 15 digits';
+                    }
+                    else{
+                        if(creditCard.toString().length != 16)
+                            msg = 'The credit card number for Visa, MasterCard and Discover should have 15 digits';
+                    }
+                }
+            }
+            return msg;
+        }
+    }
+});
+
+module.factory('ServiceDate', function(){
+    return {
+        get : function(days){
+            var dayNames = new Array("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday");    
+            var monthNames = new Array("January","February","March","April","May","June","July","August","September","October","November","December"); 
+            var now = new Date();   
+            now.setDate(now.getDate() + days);   
+            var nowString =  dayNames[now.getDay()] + ", " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();   
+            return nowString;
+        }
+    }
+});
 /* 
  * This is the Controller for the CC Page
  */
 
-module.controller( 'CcCtrl' , function($scope,$locale,$window,ServiceHandler,$location,AlertHandler,BakeCookie,encrypt,ParameterByName) {
+module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
       billingInfo = BakeCookie.get('billingInfo');
-      if(billingInfo == undefined){ // check if the user went through the correct order 
-          $window.location.href = "#/?redirected=1";
-      }
-      $scope.templates = { header  : 'templates/headers/header.html',
-                          templateCC : 'templates/ccTemplate.html',
-                          footer : 'templates/footers/footer.html',
-                          content : 'templates/contents/order.html',
-                          content2 : 'templates/contents/step2-order.html'
-                      };
+      $scope.ver = $routeParams.ver || 1;
+      $scope.showEl = orderShowEl;
+      $scope.showElOp = orderShowElOp;
+      $scope.templates = { 
+          header  : 'templates/headers/header.html',
+          templateCC : 'templates/forms/ccTemplate.html',
+          footer : 'templates/footers/footer.html',
+          1 : 'templates/contents/billing.html',
+          content2 : 'templates/contents/step2-order.html'};
       $scope.ccinfo = {};
-      $scope.ccinfo.planID = orderSettings.Result.planID;
-      $scope.ccinfo.trialPackageID = orderSettings.Result.trialPackageID;
-      $scope.ccinfo.chargeForTrial = orderSettings.Result.chargeForTrial;
-      $scope.ccinfo.campaign_id = orderSettings.Result.campaign_id;
+      $scope.currentYear = new Date().getFullYear();
+      $scope.currentMonth = new Date().getMonth() + 1;
+      $scope.months = $locale.DATETIME_FORMATS.MONTH;
+      if(billingInfo == undefined && !orderShowEl.shippingForm) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
+      $scope.ccinfo.trialPackageID = orderSettings.trialPackageID;
+      $scope.ccinfo.chargeForTrial = orderSettings.chargeForTrial;
+      $scope.ccinfo.planID = orderSettings.planID;
+      $scope.ccinfo.campaignID = orderSettings.campaign_id;
       $scope.ccinfo.firstName = billingInfo.firstName;
       $scope.ccinfo.lastName = billingInfo.lastName;
       $scope.ccinfo.address1 = billingInfo.address1;
@@ -327,16 +465,11 @@ module.controller( 'CcCtrl' , function($scope,$locale,$window,ServiceHandler,$lo
       $scope.ccinfo.country = billingInfo.country;
       $scope.ccinfo.phone = billingInfo.phone;
       $scope.ccinfo.email = billingInfo.email;
-      $scope.ccinfo.sendConfirmationEmail = orderSettings.Result.sendConfirmationEmail;
-      $scope.ccinfo.affiliate = ParameterByName.get('aff') || '';
-      $scope.ccinfo.subAffiliate = ParameterByName.get('sub') || '';
+      $scope.ccinfo.sendConfirmationEmail = orderSettings.sendConfirmationEmail;
+      $scope.ccinfo.affiliate = $routeParams('aff') || '';
+      $scope.ccinfo.subAffiliate = $routeParams('sub') || '';
       $scope.ccinfo.prospectID = billingInfo.ProspectID;
-      $scope.ccinfo.description = orderSettings.Result.description;
-      $scope.ccinfo.successRedirect = orderSettings.Result.successRedirect;
-      $scope.currentYear = new Date().getFullYear();
-      $scope.currentMonth = new Date().getMonth() + 1;
-      $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      $scope.showEl = orderShowEl.Result;
+      $scope.ccinfo.description = orderSettings.description;
       $scope.save = function(){  // save function, called when submit
         $("#button-processing").show();
         $("#button-submit").hide();
@@ -345,31 +478,18 @@ module.controller( 'CcCtrl' , function($scope,$locale,$window,ServiceHandler,$lo
         jsonObj = JSON.stringify($scope.ccinfo);
         ServiceHandler.post('CreateSubscription',jsonObj
         ).then(function(response){
-            if(response.data.State == 'Success'){
+            if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
                 internal = true;
-                var success = $scope.ccinfo.successRedirect;
-                $window.location.href = "#/"+success.split('.')[0];
+                $window.location.href = "#/"+config.siteFlow.three;
             }
             else{
-                if(response.data.Info == 'Test charge. ERROR'){
-                    var success = $scope.ccinfo.successRedirect;
-                    $window.location.href = "#/"+success.split('.')[0]+'?successDownSell'+orderSettings.Result.successDownSell;
-                }
-                else{
-                    $("#button-processing").hide();
-                    $("#button-submit").show();
-                    $scope.ccinfo.creditCard = oldCC;
-                    AlertHandler.alert(response.data.Info);
-                }
+                $("#button-processing").hide();
+                $("#button-submit").show();
+                $scope.ccinfo.creditCard = oldCC;
+                AlertHandler.alert(response.data.Info);
             }
         });
         return false;
-      };
-      $scope.hoverIn = function(){
-        jQuery(".whatiscvv").stop(true, false).show('slow');
-      };
-      $scope.hoverOut = function(){
-        jQuery(".whatiscvv").stop(true, false).hide('slow');
       };
       $scope.typeChange = function(){
             var type = $scope.ccinfo.paymentType;
@@ -391,56 +511,22 @@ module.controller( 'CcCtrl' , function($scope,$locale,$window,ServiceHandler,$lo
             }
       };
       $scope.getDate = function(days) {  
-	var dayNames = new Array("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday");    
-	var monthNames = new Array("January","February","March","April","May","June","July","August","September","October","November","December"); 
-	var now = new Date();   
-	now.setDate(now.getDate() + days);   
-	var nowString =  dayNames[now.getDay()] + ", " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();   
-        return nowString;
+	 return ServiceDate.get(days);
        };
        $scope.ccCheck = function(){
-         var type = $scope.ccinfo.paymentType,
-                 creditCard = $('#cc_number').val();
-            if(type==undefined){
-                AlertHandler.alert('Please select a Card Type first');
-            }
-            else{
-                if(creditCard == undefined){
-                    
-                }
-                else{
-                    if(type==1){
-                        if(creditCard.toString().length != 15)
-                            AlertHandler.alert('The credit card number for AMEX should have 15 digits');
-                    }
-                    else{
-                        if(creditCard.toString().length != 16)
-                            AlertHandler.alert('The credit card number for Visa, MasterCard and Discover should have 15 digits');
-                    }
-                }
+            var msg = ServiceCc.get($scope.ccinfo.paymentType,$('#cc_number').val());
+            if(msg){
+                AlertHandler.alert(msg);
             }
      };
      $scope.cvvCheck = function(){
-         var type = $scope.ccinfo.paymentType;
-         var cvv = $('#cc_cvv').val();
-            if(type==undefined){
-                AlertHandler.alert('Please select a Card Type first');
-            }
-            else{
-                if(cvv == undefined){
-                }
-                else{
-                    if(type==1){
-                        if(cvv.toString().length != 4)
-                            AlertHandler.alert('The CVV number for AMEX should have 4 digits');
-                    }
-                    else{
-                        if(cvv.toString().length != 3)
-                            AlertHandler.alert('The CVV number for Visa, MasterCard and Discover should have 3 digits');
-                    }
-                }
-            }
+        var msg = ServiceCvv.get($scope.ccinfo.paymentType,$('#cc_cvv').val());
+        if(msg){
+            AlertHandler.alert(msg);
+        }
      };
+     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result});
+     $scope.status = 'ready';
     });
   
 
@@ -450,238 +536,25 @@ module.controller( 'CcCtrl' , function($scope,$locale,$window,ServiceHandler,$lo
  */
 
 
-module.controller( 'InfoCtrl' , ['$scope','$window','$location','ServiceHandler','AlertHandler','BakeCookie','ParameterByName',
-    function($scope,$window,$location,ServiceHandler,AlertHandler,BakeCookie,ParameterByName) {
+module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','$sce','ServiceHandler','ServicePixel','AlertHandler','BakeCookie','ServiceDate','ServiceHit',
+    function($scope,$window,$routeParams,$location,$sce,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,ServiceDate,ServiceHit) {
+      $scope.ver = $routeParams.ver || 1;
       if($location.search().redirected == 1){  // check if the user is here because a redirect
-          AlertHandler.alert("You're here because a this information is needed");
+          AlertHandler.alert("You're here because this information is needed");
       }
-      $scope.$on('$destroy', function() {
-            window.onbeforeunload = undefined;
-         });
-         $scope.$on('$locationChangeStart', function(event, next, current) {
-            if(!confirm("Are you sure you want to leave this page?")) {
-               event.preventDefault();
-            }
-         });
-      $scope.templates = { header  : 'templates/headers/header.html',
-                          templateBill : 'templates/billingTemplate.html',
-                          footer : 'templates/footers/footer.html',
-                          content : 'templates/contents/index.html'
-                      };
+      $scope.templates = { 
+          header  : 'templates/headers/header.html',
+          templateBill : 'templates/forms/billingTemplate.html',
+          footer : 'templates/footers/footer.html',
+          1 : 'templates/contents/index.html'
+      };
       $scope.billinfo = {};
-      $scope.billinfo.step = '1';
-      $scope.billinfo.hasFormSubmitted = '';
-      $scope.billinfo.campaign_id = '117';
-      $scope.billinfo.domain_name = $location.host()+'/specialoffer/';
+      $scope.billinfo.productTypeID = config.IndexBootstrap.ProductTypeID;
+      $scope.billinfo.affiliate = $routeParams.aff;
+      $scope.billinfo.subAffiliate = $routeParams.sub;
+      $scope.billinfo.customField1 = $routeParams.click_id;
       $scope.billinfo.country = 'US';
-      jQuery('#header-alert').show();
-      $scope.showEl = indexShowEl.Result;
-      $scope.states = [
-        {
-            "name": "Alabama",
-            "abbreviation": "AL"
-        },
-        {
-        "name": "Alaska",
-        "abbreviation": "AK"
-        },
-        {
-        "name": "Arizona",
-        "abbreviation": "AZ"
-        },
-        {
-        "name": "Arkansas",
-        "abbreviation": "AR"
-        },
-        {
-        "name": "California",
-        "abbreviation": "CA"
-        },
-        {
-        "name": "Colorado",
-        "abbreviation": "CO"
-        },
-        {
-        "name": "Connecticut",
-        "abbreviation": "CT"
-        },
-        {
-        "name": "Delaware",
-        "abbreviation": "DE"
-        },
-        {
-        "name": "District Of Columbia",
-        "abbreviation": "DC"
-        },
-        {
-        "name": "Florida",
-        "abbreviation": "FL"
-        },
-        {
-        "name": "Georgia",
-        "abbreviation": "GA"
-        },
-        {
-        "name": "Hawaii",
-        "abbreviation": "HI"
-        },
-        {
-        "name": "Idaho",
-        "abbreviation": "ID"
-        },
-        {
-        "name": "Illinois",
-        "abbreviation": "IL"
-        },
-        {
-        "name": "Indiana",
-        "abbreviation": "IN"
-        },
-        {
-        "name": "Iowa",
-        "abbreviation": "IA"
-        },
-        {
-        "name": "Kansas",
-        "abbreviation": "KS"
-        },
-        {
-        "name": "Kentucky",
-        "abbreviation": "KY"
-        },
-        {
-        "name": "Louisiana",
-        "abbreviation": "LA"
-        },
-        {
-        "name": "Maine",
-        "abbreviation": "ME"
-        },
-        {
-        "name": "Maryland",
-        "abbreviation": "MD"
-        },
-        {
-        "name": "Massachusetts",
-        "abbreviation": "MA"
-        },
-        {
-        "name": "Michigan",
-        "abbreviation": "MI"
-        },
-        {
-        "name": "Minnesota",
-        "abbreviation": "MN"
-        },
-        {
-        "name": "Mississippi",
-        "abbreviation": "MS"
-        },
-        {
-        "name": "Missouri",
-        "abbreviation": "MO"
-        },
-        {
-        "name": "Montana",
-        "abbreviation": "MT"
-        },
-        {
-        "name": "Nebraska",
-        "abbreviation": "NE"
-        },
-        {
-        "name": "Nevada",
-        "abbreviation": "NV"
-        },
-        {
-        "name": "New Hampshire",
-        "abbreviation": "NH"
-        },
-        {
-        "name": "New Jersey",
-        "abbreviation": "NJ"
-        },
-        {
-        "name": "New Mexico",
-        "abbreviation": "NM"
-        },
-        {
-        "name": "New York",
-        "abbreviation": "NY"
-        },
-        {
-        "name": "North Carolina",
-        "abbreviation": "NC"
-        },
-        {
-        "name": "North Dakota",
-        "abbreviation": "ND"
-        },
-        {
-        "name": "Ohio",
-        "abbreviation": "OH"
-        },
-        {
-        "name": "Oklahoma",
-        "abbreviation": "OK"
-        },
-        {
-        "name": "Oregon",
-        "abbreviation": "OR"
-        },
-        {
-        "name": "Pennsylvania",
-        "abbreviation": "PA"
-        },
-        {
-        "name": "Rhode Island",
-        "abbreviation": "RI"
-        },
-        {
-        "name": "South Carolina",
-        "abbreviation": "SC"
-        },
-        {
-        "name": "South Dakota",
-        "abbreviation": "SD"
-        },
-        {
-        "name": "Tennessee",
-        "abbreviation": "TN"
-        },
-        {
-        "name": "Texas",
-        "abbreviation": "TX"
-        },
-        {
-        "name": "Utah",
-        "abbreviation": "UT"
-        },
-        {
-        "name": "Vermont",
-        "abbreviation": "VT"
-        },
-        {
-        "name": "Virginia",
-        "abbreviation": "VA"
-        },
-        {
-        "name": "Washington",
-        "abbreviation": "WA"
-        },
-        {
-        "name": "West Virginia",
-        "abbreviation": "WV"
-        },
-        {
-        "name": "Wisconsin",
-        "abbreviation": "WI"
-        },
-        {
-        "name": "Wyoming",
-        "abbreviation": "WY"
-        }
-      ];
+      $scope.showEl = indexShowEl;
       $scope.save = function(info){ // fuction fired after submit form
         $("#button-submit").hide();
         $("#button-processing").show();
@@ -692,7 +565,7 @@ module.controller( 'InfoCtrl' , ['$scope','$window','$location','ServiceHandler'
                 info.ProspectID = response.data.Result.ProspectID;
                 BakeCookie.set('billingInfo',info);
                 internal = true;
-                $window.location.href = "#/order";
+                $window.location.href = "#/"+ config.siteFlow.two ;
             }
             else{
                 $("#button-processing").hide();
@@ -702,17 +575,12 @@ module.controller( 'InfoCtrl' , ['$scope','$window','$location','ServiceHandler'
         });
         return false;
       };
-      $scope.processing = function(){
-          
-      };
       $scope.getDate = function(days) {  
-	var dayNames = new Array("Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday");    
-	var monthNames = new Array("January","February","March","April","May","June","July","August","September","October","November","December"); 
-	var now = new Date();   
-	now.setDate(now.getDate() + days);   
-	var nowString =  dayNames[now.getDay()] + ", " + monthNames[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();   
-        return nowString;
+	 return ServiceDate.get(days);
        };
+       ServicePixel.get(pageId,'').then(function(response){$scope.pixel = response.data.Result});
+       $scope.scripts = {script:{src: $sce.trustAsResourceUrl(ServiceHit.get(pageId,''))}};
+       $scope.status = 'ready';
     }]);
 
 /* 
@@ -724,6 +592,112 @@ module.controller( 'SuccessCtrl' , function($scope) {
                           footer : 'templates/footers/footer.html',
                           content : 'templates/contents/success.html'
                       };
+                      
+                      $scope.status = 'ready';
 });
+  
+
+
+/* 
+ * This is the Controller for the CC Page
+ */
+
+module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,ServiceCvv,ServiceDate,ServiceCc,ServiceHandler,AlertHandler,BakeCookie,encrypt,ServicePixel) {
+      billingInfo = BakeCookie.get('billingInfo');
+      ccInfo = BakeCookie.get('ccInfo');
+      $scope.templates = { 
+          1 : 'templates/contents/upsellTemplate.html'
+      }
+      $scope.up = {};
+      $scope.showCc = false;
+      $scope.currentYear = new Date().getFullYear();
+      $scope.currentMonth = new Date().getMonth() + 1;
+      $scope.months = $locale.DATETIME_FORMATS.MONTH;
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
+      if(ccInfo == undefined) $scope.showCc = true;
+      $scope.up.amount = upsellSettings.amount;
+      $scope.up.shipping = upsellSettings.shipping;
+      $scope.up.productTypeID = upsellSettings.productTypeID;
+      $scope.up.productID = upsellSettings.productID;
+      $scope.up.campaignID = upsellSettings.campaign_id;
+      $scope.up.firstName = billingInfo.firstName;
+      $scope.up.lastName = billingInfo.lastName;
+      $scope.up.address1 = billingInfo.address1;
+      $scope.up.address2 = billingInfo.address2 || '';
+      $scope.up.city = billingInfo.city;
+      $scope.up.state = billingInfo.state;
+      $scope.up.zip = billingInfo.zip;
+      $scope.up.country = billingInfo.country;
+      $scope.up.phone = billingInfo.phone;
+      $scope.up.email = billingInfo.email;
+      $scope.up.paymentType = ccInfo.paymentType;
+      $scope.up.creditCard = ccInfo.creditCard;
+      $scope.up.cvv = ccInfo.cvv;
+      $scope.up.expMonth = ccInfo.expMonth;
+      $scope.up.expYear = ccInfo.expYear;
+      $scope.up.sendConfirmationEmail = upsellSettings.sendConfirmationEmail;
+      $scope.up.affiliate = $routeParams('aff') || '';
+      $scope.up.subAffiliate = $routeParams('sub') || '';
+      $scope.up.customField1 = $routeParams.click_id;
+      $scope.up.prospectID = billingInfo.ProspectID;
+      $scope.up.description = upsellSettings.description;
+      $scope.save = function(){  // save function, called when submit
+        $("#button-processing").show();
+        $("#button-submit").hide();
+        var oldCC = $scope.up.creditCard; 
+        $scope.up.creditCard = encrypt.encryptData(oldCC);
+        jsonObj = JSON.stringify($scope.up);
+        ServiceHandler.post('Charge',jsonObj
+        ).then(function(response){
+            if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
+                internal = true;
+                $window.location.href = "#/"+config.siteFlow.three;
+            }
+            else{
+                $("#button-processing").hide();
+                $("#button-submit").show();
+                $scope.ccinfo.creditCard = oldCC;
+                AlertHandler.alert(response.data.Info);
+            }
+        });
+        return false;
+      };
+      $scope.typeChange = function(){
+            var type = $scope.ccinfo.paymentType;
+            if(type == 1){
+                $('#cc_number').attr('pattern','{15}');
+                $('#cc_number').attr('maxlength','15');
+                $("#cc_number").mask("9999-999999-99999");
+                $('#cc_cvv').attr('pattern','[0-9]{4}');
+                $("#cc_cvv").mask("9999");
+                $('#cc_cvv').attr('maxlength','4');
+            }
+            else{
+                $('#cc_number').attr('pattern','{13,16}');
+                $('#cc_number').attr('maxlength','16');
+                $("#cc_number").mask("9999-9999-9999-9999");
+                $('#cc_cvv').attr('pattern','[0-9]{3}');
+                $("#cc_cvv").mask("999");
+                $('#cc_cvv').attr('maxlength','3');
+            }
+      };
+      $scope.getDate = function(days) {  
+	 return ServiceDate.get(days);
+       };
+       $scope.ccCheck = function(){
+            var msg = ServiceCc.get($scope.ccinfo.paymentType,$('#cc_number').val());
+            if(msg){
+                AlertHandler.alert(msg);
+            }
+     };
+     $scope.cvvCheck = function(){
+        var msg = ServiceCvv.get($scope.ccinfo.paymentType,$('#cc_cvv').val());
+        if(msg){
+            AlertHandler.alert(msg);
+        }
+     };
+     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result});
+     $scope.status = 'ready';
+    });
   
 
