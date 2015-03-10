@@ -5,26 +5,20 @@
 
 module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','$sce','ServiceHandler','ServicePixel','AlertHandler','BakeCookie','ServiceDate','ServiceHit',
     function($scope,$window,$routeParams,$location,$sce,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,ServiceDate,ServiceHit) {
-      $scope.ver = $routeParams.ver || 1;
       if($location.search().redirected == 1){  // check if the user is here because a redirect
           AlertHandler.alert("You're here because this information is needed");
       }
-      $scope.templates = { 
-          header  : 'templates/headers/header.html',
-          templateBill : 'templates/forms/billingTemplate.html',
-          footer : 'templates/footers/footer.html',
-          1 : 'templates/contents/index.html'
-      };
+      $scope.templates = { templateBill : 'templates/forms/billingTemplate.html' };
       $scope.billinfo = {};
-      $scope.billinfo.productTypeID = config.IndexBootstrap.ProductTypeID;
+      $scope.billinfo.productTypeID = indexInfo.ProductTypeID;
       $scope.billinfo.affiliate = $routeParams.aff;
       $scope.billinfo.subAffiliate = $routeParams.sub;
       $scope.billinfo.customField1 = $routeParams.click_id;
-      $scope.billinfo.country = 'US';
-      $scope.showEl = indexShowEl;
+      $scope.billinfo.country = indexInfo.selectedCountry || 'US';
+      $scope.showEl = indexInfo;
       $scope.save = function(info){ // fuction fired after submit form
-        $("#button-submit").hide();
-        $("#button-processing").show();
+        $scope.proccessing = true;
+        $scope.submitBtn = false;
         jsonObj = JSON.stringify(info);
         ServiceHandler.post('createprospect',jsonObj)
         .then(function(response){
@@ -32,11 +26,11 @@ module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','
                 info.ProspectID = response.data.Result.ProspectID;
                 BakeCookie.set('billingInfo',info);
                 internal = true;
-                $window.location.href = "#/"+ config.siteFlow.two ;
+                $window.location.href = indexInfo.successRedirect;
             }
             else{
-                $("#button-processing").hide();
-                $("#button-submit").show();
+                $scope.proccessing = false;
+                $scope.submitBtn = true;
                 AlertHandler.alert(response.data.Info);
             }
         });

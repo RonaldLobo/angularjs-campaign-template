@@ -7,6 +7,9 @@ var livereload = require("gulp-livereload");
 var concat = require("gulp-concat");
 var uglify = require('gulp-uglify');
 var watch = require('gulp-watch');
+var sass = require('gulp-sass');
+var autoprefixer = require('gulp-autoprefixer');
+var minifycss = require('gulp-minify-css');
 global.errorMessage = '';
  
 //Configuration - Change me
@@ -23,6 +26,7 @@ nameMin: 'app.min.js'
  
  
 gulp.task('watch', function () {
+    gulp.watch(['sass/*.scss','sass/includes/*.scss'], ['styles']);
     for (var j in jsFiles) {
         scriptWatch(jsFiles[j]);
     }
@@ -42,13 +46,13 @@ gulp.src(jsData.watch)
 }
  
 gulp.task('default', ['watch']);
- 
- 
-var shell = require('gulp-shell'); 
-gulp.task('docs', shell.task([ 
-  'node_modules/jsdoc/jsdoc.js '+ 
-    '-c node_modules/angular-jsdoc/conf.json '+   // config file
-    '-t node_modules/angular-jsdoc/template '+    // template file
-    '-d build/JSdocs '+                             // output directory
-    '-r js/App'                              // source code directory
-]));
+
+gulp.task('styles', function() {
+  return gulp.src('sass/*.scss')
+    .pipe(sass({ style: 'expanded' }))
+    .pipe(autoprefixer('last 2 version', 'safari 5', 'ie 8', 'ie 9', 'opera 12.1'))
+    .pipe(gulp.dest('css'))
+    .pipe(rename({suffix: '.min'}))
+    .pipe(minifycss())
+    .pipe(gulp.dest('css'));
+});

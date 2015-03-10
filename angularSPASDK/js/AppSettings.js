@@ -6,51 +6,71 @@
 
 var config = {
         general :{
-            instance: 'livedemo'
+            instance: 'livedemo' //Instance configured on the CRM, eg. mostly.trianglecrm.com
         },
-        siteFlow: {
-            one : '/',
-            two : 'Billing',
-            three : 'upsell1',
-            four : 'upsell2',
-            five : 'confirmation',
-            domain: '/'
+        0:{ //default application Path
+            landing : {
+                template : '/templates/contents/index.html',
+                productTypeID : 1, //Project ID
+                address2 : false, //You want to ask for Address 2
+                country : false, //You want to ask for the Country in case you dont US will be chose by default
+                successRedirect: '/#!/Billing'
+            },
+            billing : {
+                productTypeID : 1, //Project ID
+                planID : '2',
+                trialPackageID : '1',
+                chargeForTrial : true,
+                campaignID : '1',
+                sendConfirmationEmail : 'true',
+                description : 'Desc of order',
+                address2 : true,
+                country : true,
+                agree: true,
+                selectedCountry: 'US',
+                successRedirect: '/#!/Success'
+            }
         },
-        BillingFormRequired : {
-            address2 : true,
-            country : true
-        },
-        CcFormRequired : {
-            shippingForm : true
-        },
-        IndexBootstrap : {
-            ProductTypeID: '10'
-        },
-        OrderBootstrap : {
-            planID : '6',
-            trialPackageID : '2',
-            chargeForTrial : true,
-            campaignID : '1554',
-            sendConfirmationEmail : 'true',
-            description : 'Desc of order'
-        },
-        Upsell1Bootstrap : {
-            amount : '123',
-            shipping : '123',
-            productTypeID: '10',
-            campaignID : '10',
-            productID : '123',
-            sendConfirmationEmail : 'false',
-            description : 'Desc of charge'
-        },
-        DownSellBootstrap : {
-            amount : '123',
-            shipping : '123',
-            productTypeID: '10',
-            campaignID : '10',
-            productID : '123',
-            sendConfirmationEmail : 'false',
-            description : 'Desc of charge'
+        1:{
+            landing : {
+                template : '/templates/contents/home1.html',
+                productTypeID : 1, //Project ID
+                address2 : true, //You want to ask for Address 2
+                country : true, //You want to ask for the Country in case you dont US will be chose by default
+                agree : true,
+                successRedirect: '/#!/BillingUp'
+            },
+            billing : {
+                products:{
+                    1:{
+                        amount : 89.95,
+                        shipping : 4.95,
+                        productID : '1',
+                        description : 'Desc of charge'
+                    },
+                    2:{
+                        amount : 59.90,
+                        shipping : 4.95,
+                        productID : '1',
+                        description : 'Desc of charge'
+                    },
+                    3:{
+                        amount : 29.95,
+                        shipping : 4.95,
+                        productID : '1',
+                        description : 'Desc of charge'
+                    }
+                },
+                productTypeID: '1',
+                campaignID : '1',
+                sendConfirmationEmail : 'false',
+                downsell : false,
+                address2 : true,
+                country : true,
+                agree: true,
+                selectedCountry: 'US',
+                successRedirect: '/#!/Success'
+            }
         }
     }
 

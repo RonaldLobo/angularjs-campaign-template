@@ -16,22 +16,22 @@ module.config(['$locationProvider', function($locationProvider){
 module.config(function($routeProvider) {
     $routeProvider
             .when('/', {
-                    templateUrl : '/templates/holders/homeHolder.html',
+                    templateUrl : '/templates/holders/home.html',
                     controller  : 'InfoCtrl'
             })
-            .when('/{ver}', {   
-                    templateUrl : '/templates/holders/homeHolder.html',
+            .when('/Home', {
+                    templateUrl : '/templates/holders/home.html',
                     controller  : 'InfoCtrl'
             })
             .when('/Billing', {
                     templateUrl : '/templates/contents/billing.html',
                     controller  : 'CcCtrl'
             })
-            .when('/success', {
+            .when('/Success', {
                     templateUrl : '/templates/contents/success.html',
                     controller  : 'SuccessCtrl'
             })
-            .when('/upsell', {
+            .when('/Upsell', {
                     templateUrl : '/templates/contents/upsell.php',
                     controller  : 'UpCtrl'
             })

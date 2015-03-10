@@ -2,22 +2,21 @@
  * This is the Controller for the CC Page
  */
 
-module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
+module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,$sce,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
       billingInfo = BakeCookie.get('billingInfo');
-      $scope.ver = $routeParams.ver || 1;
-      $scope.showEl = orderShowEl;
-      $scope.showElOp = orderShowElOp;
-      $scope.templates = { 
-          header  : 'templates/headers/header.html',
-          templateCC : 'templates/forms/ccTemplate.html',
-          footer : 'templates/footers/footer.html',
-          1 : 'templates/contents/billing.html',
-          content2 : 'templates/contents/step2-order.html'};
+      ver = $routeParams.ver || 0;
+      orderSettings = config[ver].billing;
+      downSell = orderSettings.downsell || '';
+      downSellImg = orderSettings.downSellImg || '';
+      aff = $routeParams.aff || '';
+      sub = $routeParams.sub || '';
+      $scope.showEl = orderSettings;
+      $scope.templates = { templateCC : 'templates/forms/ccTemplate.html'}
       $scope.ccinfo = {};
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined && !orderShowEl.shippingForm) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"+'&aff='+aff+'&sub='+sub; // check if the user went through the correct order 
       $scope.ccinfo.trialPackageID = orderSettings.trialPackageID;
       $scope.ccinfo.chargeForTrial = orderSettings.chargeForTrial;
       $scope.ccinfo.planID = orderSettings.planID;
@@ -33,27 +32,50 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,Servi
       $scope.ccinfo.phone = billingInfo.phone;
       $scope.ccinfo.email = billingInfo.email;
       $scope.ccinfo.sendConfirmationEmail = orderSettings.sendConfirmationEmail;
-      $scope.ccinfo.affiliate = $routeParams('aff') || '';
-      $scope.ccinfo.subAffiliate = $routeParams('sub') || '';
+      $scope.ccinfo.affiliate = $routeParams.aff || '';
+      $scope.ccinfo.subAffiliate = $routeParams.sub || '';
       $scope.ccinfo.prospectID = billingInfo.ProspectID;
       $scope.ccinfo.description = orderSettings.description;
+      function getSecondPart(str) {
+         return str.split('<Message>')[1];
+      }
+      function getFirstPart(str) {
+         return str.split('</Message>')[0];
+      }
       $scope.save = function(){  // save function, called when submit
         $("#button-processing").show();
         $("#button-submit").hide();
         var oldCC = $scope.ccinfo.creditCard; 
+        oldCC = oldCC.toString().replace(/-/g,'');
         $scope.ccinfo.creditCard = encrypt.encryptData(oldCC);
-        jsonObj = JSON.stringify($scope.ccinfo);
-        ServiceHandler.post('CreateSubscription',jsonObj
+        var ccUsed = {
+                  creditCard : $scope.ccinfo.creditCard,
+                  productID : orderSettings.projectID
+              }
+        ServiceHandler.post('IsCreditCardDupe',ccUsed
         ).then(function(response){
             if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
-                internal = true;
-                $window.location.href = "#/"+config.siteFlow.three;
+                jsonObj = JSON.stringify($scope.ccinfo);
+                ServiceHandler.post('CreateSubscription',jsonObj
+                ).then(function(response){
+                    if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
+                        BakeCookie.set('ccInfo',info);
+                        internal = true;
+                        $window.location.href = orderSettings.successRedirect;
+                    }
+                    else{
+                        $scope.proccessing = false;
+                        $scope.submitBtn = true;
+                        $scope.ccinfo.creditCard = oldCC;
+                        AlertHandler.alert(response.data.Info);
+                    }
+                });
             }
             else{
                 $("#button-processing").hide();
                 $("#button-submit").show();
                 $scope.ccinfo.creditCard = oldCC;
-                AlertHandler.alert(response.data.Info);
+                AlertHandler.alert('This Credit Card is a dupe in our system.');
             }
         });
         return false;
@@ -92,7 +114,8 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,Servi
             AlertHandler.alert(msg);
         }
      };
-     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result});
+     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result;});
+     $scope.scripts = {script:{src: $sce.trustAsResourceUrl(ServiceHit.get(pageId,''))}};
      $scope.status = 'ready';
     });
   

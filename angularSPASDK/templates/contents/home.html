@@ -1,0 +1,15 @@
+<script>
+    var indexInfo = config.homeProductInfo; // match page required elements in appsettings JS
+    var pageId = 1;
+</script>
+
+<h1>Billing Information</h1>
+<div class="" ng-include="templates.templateBill">
+
+</div>
+
+<!-- Triangle tracking -->
+<div ng-bind-html="pixel | to_trusted"></div>
+<script ng-repeat="script in scripts" ng-src="{{script.src}}"></script>
+<!-- end of Triangle tracking -->
+    

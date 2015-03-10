@@ -4,17 +4,15 @@
 
 module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,ServiceCvv,ServiceDate,ServiceCc,ServiceHandler,AlertHandler,BakeCookie,encrypt,ServicePixel) {
       billingInfo = BakeCookie.get('billingInfo');
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
       ccInfo = BakeCookie.get('ccInfo');
-      $scope.templates = { 
-          1 : 'templates/contents/upsellTemplate.html'
-      }
+      if(ccInfo == undefined) $scope.showCc = true;
+      $scope.templates = { templateUpsell : 'templates/forms/upsellTemplate.html'};
       $scope.up = {};
       $scope.showCc = false;
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
-      if(ccInfo == undefined) $scope.showCc = true;
       $scope.up.amount = upsellSettings.amount;
       $scope.up.shipping = upsellSettings.shipping;
       $scope.up.productTypeID = upsellSettings.productTypeID;
@@ -36,26 +34,27 @@ module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,Servi
       $scope.up.expMonth = ccInfo.expMonth;
       $scope.up.expYear = ccInfo.expYear;
       $scope.up.sendConfirmationEmail = upsellSettings.sendConfirmationEmail;
-      $scope.up.affiliate = $routeParams('aff') || '';
-      $scope.up.subAffiliate = $routeParams('sub') || '';
-      $scope.up.customField1 = $routeParams.click_id;
+      $scope.up.affiliate = $routeParams.aff || '';
+      $scope.up.subAffiliate = $routeParams.sub || '';
+      $scope.up.customField1 = $routeParams.click_id || '';
       $scope.up.prospectID = billingInfo.ProspectID;
       $scope.up.description = upsellSettings.description;
       $scope.save = function(){  // save function, called when submit
-        $("#button-processing").show();
-        $("#button-submit").hide();
+        $scope.proccessing = true;
+        $scope.submitBtn = false;
         var oldCC = $scope.up.creditCard; 
+        oldCC = oldCC.toString().replace(/-/g,'');
         $scope.up.creditCard = encrypt.encryptData(oldCC);
         jsonObj = JSON.stringify($scope.up);
         ServiceHandler.post('Charge',jsonObj
         ).then(function(response){
             if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
                 internal = true;
-                $window.location.href = "#/"+config.siteFlow.three;
+                $window.location.href = upsellSettings.successRedirect;
             }
             else{
-                $("#button-processing").hide();
-                $("#button-submit").show();
+                $scope.proccessing = true;
+                $scope.submitBtn = false;
                 $scope.ccinfo.creditCard = oldCC;
                 AlertHandler.alert(response.data.Info);
             }

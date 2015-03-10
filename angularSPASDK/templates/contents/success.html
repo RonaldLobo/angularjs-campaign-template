@@ -1,20 +1,48 @@
-<!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<html>
-    <head>
-        <title>TODO supply a title</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-        <div>TODO write content</div>
-    </body>
-</html>
-
+<script>
+    var pageId = 4;
+</script>
+<div class="success">
+    <div class="wrapper">
+        <table>
+            <tr>
+                <td>First Name</td>
+                <td>{{billingInfo.firstName}}</td>
+            </tr>
+            <tr>
+                <td>Last Name</td>
+                <td>{{billingInfo.lastName}}</td>
+            </tr>
+            <tr>
+                <td>Address</td>
+                <td>{{billingInfo.address1}}</td>
+            </tr>
+            <tr>
+                <td>Address 2</td>
+                <td>{{billingInfo.address2}}</td>
+            </tr>
+            <tr>
+                <td>Country</td>
+                <td>{{billingInfo.country}}</td>
+            </tr>
+            <tr>
+                <td>State</td>
+                <td>{{billingInfo.state}}</td>
+            </tr>
+            <tr>
+                <td>Zip code</td>
+                <td>{{billingInfo.zip}}</td>
+            </tr>
+            <tr>
+                <td>Phone number</td>
+                <td>{{billingInfo.phone}}</td>
+            </tr>
+            <tr>
+                <td>Email</td>
+                <td>{{billingInfo.email}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
 
 <!-- Triangle tracking -->
 <div ng-bind-html="pixel | to_trusted"></div>

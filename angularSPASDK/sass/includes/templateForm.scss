@@ -1,0 +1,54 @@
+.templateForm {
+    margin: 0 auto;
+    width: 361px;
+    .index-form-container {position:absolute; top:240px; right:55px; width:300px; padding:10px;  z-index:999;}
+    .form-title {margin:10px auto; padding-bottom:10px; border-bottom:1px dotted #959595; }
+    .form-element { 
+        margin-bottom:2px; 
+        label {display:block; float:left; position:relative; top:2px; width:35%!important; text-align:right; margin-right:10px;}
+    }
+    .form-input-full { 
+        width:100%!important; 
+        clear:both; 
+        input {padding:2px; width:164px !important; text-align:left; }
+        select {padding:2px; width: 171px !important; text-align:left;  }
+        input.checkbox { }
+    }
+    .form-input-2col {
+        input {float:left; padding:3px; width:25%!important; text-align:left; margin-right:10px; }
+        select {float:left; padding:3px; width:80px!important; text-align:left; margin-right:10px; }
+        input.checkbox { }
+    }
+    a.security-code {
+        position:relative; top:6px; font-size:11px; color:#000; 
+        &:hover {text-decoration:underline; }
+    }
+    .form-input-full .ccv {
+        width: 72px !important;
+    }
+    .whatiscvv {
+        background: url("../img/cvv2.gif") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+        border: 1px solid black;
+        height: 228px;
+        overflow: hidden;
+        position: absolute;
+        right: 256px;
+        top: 11px;
+        width: 179px;
+        z-index: 9999;
+        display: none;
+    }
+    .cvv-help {
+        position: relative;
+        top: 5px;
+        color: #444040; 
+        font-size: 11px;
+    }
+    .form-button {
+        display: block;
+        margin: 35px auto;
+    }
+    .form-button:hover {
+        cursor: pointer;
+    }
+}

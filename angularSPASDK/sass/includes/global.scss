@@ -1,0 +1,11 @@
+body { background:#fff; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:21px; color:#000; text-align:center;}
+.wrapper {position:relative; width:1001px; margin:0 auto; text-align:left; }
+.red {color:#bb0056; }
+.error {
+    border: 1px solid #bb0056;
+}
+/*html5 validation red box error*/
+.ng-pristine .ng-invalid-required {
+    box-shadow: none;
+}
+

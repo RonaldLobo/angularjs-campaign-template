@@ -46,6 +46,14 @@ class Controller {
                 $vars['creditCard'] = $this->decryptCard($vars['creditCard']);
                 $result = $this->api->CreateSubscription($vars);
             break;
+            case 'charge':
+                $vars['creditCard'] = $this->decryptCard($vars['creditCard']);
+                $result = $this->api->charge($vars);
+            break;
+            case 'iscreditcarddupe':
+                $vars['creditCard'] = $this->decryptCard($vars['creditCard']);
+                $result = $this->api->IsCreditCardDupe($vars);
+            break;
             case 'fireaffiliatepixel':
                 $result = $this->api->FireAffiliatePixel($vars);
             break;

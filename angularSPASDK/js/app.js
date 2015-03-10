@@ -82,22 +82,22 @@ module.config(['$locationProvider', function($locationProvider){
 module.config(function($routeProvider) {
     $routeProvider
             .when('/', {
-                    templateUrl : '/templates/holders/homeHolder.html',
+                    templateUrl : '/templates/holders/home.html',
                     controller  : 'InfoCtrl'
             })
-            .when('/{ver}', {   
-                    templateUrl : '/templates/holders/homeHolder.html',
+            .when('/Home', {
+                    templateUrl : '/templates/holders/home.html',
                     controller  : 'InfoCtrl'
             })
             .when('/Billing', {
                     templateUrl : '/templates/contents/billing.html',
                     controller  : 'CcCtrl'
             })
-            .when('/success', {
+            .when('/Success', {
                     templateUrl : '/templates/contents/success.html',
                     controller  : 'SuccessCtrl'
             })
-            .when('/upsell', {
+            .when('/Upsell', {
                     templateUrl : '/templates/contents/upsell.php',
                     controller  : 'UpCtrl'
             })
@@ -435,22 +435,21 @@ module.factory('ServiceDate', function(){
  * This is the Controller for the CC Page
  */
 
-module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
+module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,$sce,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,encrypt,ServiceCvv,ServiceCc,ServiceDate) {
       billingInfo = BakeCookie.get('billingInfo');
-      $scope.ver = $routeParams.ver || 1;
-      $scope.showEl = orderShowEl;
-      $scope.showElOp = orderShowElOp;
-      $scope.templates = { 
-          header  : 'templates/headers/header.html',
-          templateCC : 'templates/forms/ccTemplate.html',
-          footer : 'templates/footers/footer.html',
-          1 : 'templates/contents/billing.html',
-          content2 : 'templates/contents/step2-order.html'};
+      ver = $routeParams.ver || 0;
+      orderSettings = config[ver].billing;
+      downSell = orderSettings.downsell || '';
+      downSellImg = orderSettings.downSellImg || '';
+      aff = $routeParams.aff || '';
+      sub = $routeParams.sub || '';
+      $scope.showEl = orderSettings;
+      $scope.templates = { templateCC : 'templates/forms/ccTemplate.html'}
       $scope.ccinfo = {};
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined && !orderShowEl.shippingForm) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1&aff="+aff+'&sub='sub; // check if the user went through the correct order 
       $scope.ccinfo.trialPackageID = orderSettings.trialPackageID;
       $scope.ccinfo.chargeForTrial = orderSettings.chargeForTrial;
       $scope.ccinfo.planID = orderSettings.planID;
@@ -466,27 +465,50 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,Servi
       $scope.ccinfo.phone = billingInfo.phone;
       $scope.ccinfo.email = billingInfo.email;
       $scope.ccinfo.sendConfirmationEmail = orderSettings.sendConfirmationEmail;
-      $scope.ccinfo.affiliate = $routeParams('aff') || '';
-      $scope.ccinfo.subAffiliate = $routeParams('sub') || '';
+      $scope.ccinfo.affiliate = $routeParams.aff || '';
+      $scope.ccinfo.subAffiliate = $routeParams.sub || '';
       $scope.ccinfo.prospectID = billingInfo.ProspectID;
       $scope.ccinfo.description = orderSettings.description;
+      function getSecondPart(str) {
+         return str.split('<Message>')[1];
+      }
+      function getFirstPart(str) {
+         return str.split('</Message>')[0];
+      }
       $scope.save = function(){  // save function, called when submit
         $("#button-processing").show();
         $("#button-submit").hide();
         var oldCC = $scope.ccinfo.creditCard; 
+        oldCC = oldCC.toString().replace(/-/g,'');
         $scope.ccinfo.creditCard = encrypt.encryptData(oldCC);
-        jsonObj = JSON.stringify($scope.ccinfo);
-        ServiceHandler.post('CreateSubscription',jsonObj
+        var ccUsed = {
+                  creditCard : $scope.ccinfo.creditCard,
+                  productID : orderSettings.projectID
+              }
+        ServiceHandler.post('IsCreditCardDupe',ccUsed
         ).then(function(response){
             if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
-                internal = true;
-                $window.location.href = "#/"+config.siteFlow.three;
+                jsonObj = JSON.stringify($scope.ccinfo);
+                ServiceHandler.post('CreateSubscription',jsonObj
+                ).then(function(response){
+                    if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
+                        BakeCookie.set('ccInfo',info);
+                        internal = true;
+                        $window.location.href = orderSettings.successRedirect;
+                    }
+                    else{
+                        $scope.proccessing = false;
+                        $scope.submitBtn = true;
+                        $scope.ccinfo.creditCard = oldCC;
+                        AlertHandler.alert(response.data.Info);
+                    }
+                });
             }
             else{
                 $("#button-processing").hide();
                 $("#button-submit").show();
                 $scope.ccinfo.creditCard = oldCC;
-                AlertHandler.alert(response.data.Info);
+                AlertHandler.alert('This Credit Card is a dupe in our system.');
             }
         });
         return false;
@@ -525,7 +547,8 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,Servi
             AlertHandler.alert(msg);
         }
      };
-     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result});
+     ServicePixel.get(pageId,billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result;});
+     $scope.scripts = {script:{src: $sce.trustAsResourceUrl(ServiceHit.get(pageId,''))}};
      $scope.status = 'ready';
     });
   
@@ -538,26 +561,20 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,Servi
 
 module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','$sce','ServiceHandler','ServicePixel','AlertHandler','BakeCookie','ServiceDate','ServiceHit',
     function($scope,$window,$routeParams,$location,$sce,ServiceHandler,ServicePixel,AlertHandler,BakeCookie,ServiceDate,ServiceHit) {
-      $scope.ver = $routeParams.ver || 1;
       if($location.search().redirected == 1){  // check if the user is here because a redirect
           AlertHandler.alert("You're here because this information is needed");
       }
-      $scope.templates = { 
-          header  : 'templates/headers/header.html',
-          templateBill : 'templates/forms/billingTemplate.html',
-          footer : 'templates/footers/footer.html',
-          1 : 'templates/contents/index.html'
-      };
+      $scope.templates = { templateBill : 'templates/forms/billingTemplate.html' };
       $scope.billinfo = {};
-      $scope.billinfo.productTypeID = config.IndexBootstrap.ProductTypeID;
+      $scope.billinfo.productTypeID = indexInfo.ProductTypeID;
       $scope.billinfo.affiliate = $routeParams.aff;
       $scope.billinfo.subAffiliate = $routeParams.sub;
       $scope.billinfo.customField1 = $routeParams.click_id;
-      $scope.billinfo.country = 'US';
-      $scope.showEl = indexShowEl;
+      $scope.billinfo.country = indexInfo.selectedCountry || 'US';
+      $scope.showEl = indexInfo;
       $scope.save = function(info){ // fuction fired after submit form
-        $("#button-submit").hide();
-        $("#button-processing").show();
+        $scope.proccessing = true;
+        $scope.submitBtn = false;
         jsonObj = JSON.stringify(info);
         ServiceHandler.post('createprospect',jsonObj)
         .then(function(response){
@@ -565,11 +582,11 @@ module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','
                 info.ProspectID = response.data.Result.ProspectID;
                 BakeCookie.set('billingInfo',info);
                 internal = true;
-                $window.location.href = "#/"+ config.siteFlow.two ;
+                $window.location.href = indexInfo.successRedirect;
             }
             else{
-                $("#button-processing").hide();
-                $("#button-submit").show();
+                $scope.proccessing = false;
+                $scope.submitBtn = true;
                 AlertHandler.alert(response.data.Info);
             }
         });
@@ -587,13 +604,14 @@ module.controller( 'InfoCtrl' , ['$scope','$window','$routeParams','$location','
  * This is the Controller for the CC Page
  */
 
-module.controller( 'SuccessCtrl' , function($scope) {
-      $scope.templates = { header  : 'templates/headers/header.html',
-                          footer : 'templates/footers/footer.html',
-                          content : 'templates/contents/success.html'
-                      };
-                      
-                      $scope.status = 'ready';
+module.controller( 'SuccessCtrl' , function($scope,$sce,BakeCookie,ServicePixel,ServiceHit) {
+    $scope.billingInfo = BakeCookie.get('billingInfo');
+    $scope.name = $scope.billingInfo.firstName;
+    console.log($scope.billingInfo.firstName);
+    if($scope.billingInfo == undefined) $window.location.href = "#/?redirected=1";
+    ServicePixel.get(pageId,$scope.billingInfo.ProspectID).then(function(response){$scope.pixel = response.data.Result});
+    $scope.scripts = {script:{src: $sce.trustAsResourceUrl(ServiceHit.get(pageId,''))}};
+    $scope.status = 'ready';
 });
   
 
@@ -604,17 +622,15 @@ module.controller( 'SuccessCtrl' , function($scope) {
 
 module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,ServiceCvv,ServiceDate,ServiceCc,ServiceHandler,AlertHandler,BakeCookie,encrypt,ServicePixel) {
       billingInfo = BakeCookie.get('billingInfo');
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
       ccInfo = BakeCookie.get('ccInfo');
-      $scope.templates = { 
-          1 : 'templates/contents/upsellTemplate.html'
-      }
+      if(ccInfo == undefined) $scope.showCc = true;
+      $scope.templates = { templateUpsell : 'templates/forms/upsellTemplate.html'};
       $scope.up = {};
       $scope.showCc = false;
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"; // check if the user went through the correct order 
-      if(ccInfo == undefined) $scope.showCc = true;
       $scope.up.amount = upsellSettings.amount;
       $scope.up.shipping = upsellSettings.shipping;
       $scope.up.productTypeID = upsellSettings.productTypeID;
@@ -636,26 +652,27 @@ module.controller( 'UpCtrl' , function($scope,$locale,$routeParams,$window,Servi
       $scope.up.expMonth = ccInfo.expMonth;
       $scope.up.expYear = ccInfo.expYear;
       $scope.up.sendConfirmationEmail = upsellSettings.sendConfirmationEmail;
-      $scope.up.affiliate = $routeParams('aff') || '';
-      $scope.up.subAffiliate = $routeParams('sub') || '';
-      $scope.up.customField1 = $routeParams.click_id;
+      $scope.up.affiliate = $routeParams.aff || '';
+      $scope.up.subAffiliate = $routeParams.sub || '';
+      $scope.up.customField1 = $routeParams.click_id || '';
       $scope.up.prospectID = billingInfo.ProspectID;
       $scope.up.description = upsellSettings.description;
       $scope.save = function(){  // save function, called when submit
-        $("#button-processing").show();
-        $("#button-submit").hide();
+        $scope.proccessing = true;
+        $scope.submitBtn = false;
         var oldCC = $scope.up.creditCard; 
+        oldCC = oldCC.toString().replace(/-/g,'');
         $scope.up.creditCard = encrypt.encryptData(oldCC);
         jsonObj = JSON.stringify($scope.up);
         ServiceHandler.post('Charge',jsonObj
         ).then(function(response){
             if(response.data.State == 'Success' || response.data.Info == 'Test charge. ERROR'){
                 internal = true;
-                $window.location.href = "#/"+config.siteFlow.three;
+                $window.location.href = upsellSettings.successRedirect;
             }
             else{
-                $("#button-processing").hide();
-                $("#button-submit").show();
+                $scope.proccessing = true;
+                $scope.submitBtn = false;
                 $scope.ccinfo.creditCard = oldCC;
                 AlertHandler.alert(response.data.Info);
             }

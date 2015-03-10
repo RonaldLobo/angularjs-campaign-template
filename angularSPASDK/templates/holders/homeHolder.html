@@ -1,9 +1,9 @@
 <script>
-    var indexShowEl = config.BillingFormRequired;
     var pageId = 1;
+    var ver = getUrlVars()['ver'] || 0;
+    settings = config[ver].landing;
 </script>
-{{ver}}
-<div class="holder" ng-include="templates[ver]">
+<div class="holder" ng-include="showEl.template">
 
 </div>
 
