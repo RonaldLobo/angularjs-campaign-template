@@ -449,7 +449,7 @@ module.controller( 'CcCtrl' , function($scope,$locale,$routeParams,$window,$sce,
       $scope.currentYear = new Date().getFullYear();
       $scope.currentMonth = new Date().getMonth() + 1;
       $scope.months = $locale.DATETIME_FORMATS.MONTH;
-      if(billingInfo == undefined) $window.location.href = "#/?redirected=1&aff="+aff+'&sub='sub; // check if the user went through the correct order 
+      if(billingInfo == undefined) $window.location.href = "#/?redirected=1"+'&aff='+aff+'&sub='+sub; // check if the user went through the correct order 
       $scope.ccinfo.trialPackageID = orderSettings.trialPackageID;
       $scope.ccinfo.chargeForTrial = orderSettings.chargeForTrial;
       $scope.ccinfo.planID = orderSettings.planID;
